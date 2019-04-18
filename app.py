@@ -63,7 +63,11 @@ class RegisterForm(Form):
     code = StringField('Invite code', [validators.DataRequired()])
 
     def validate_code(self, code):
-        if str(code.data) != "SzX1EaVf43":
+        cur = mysql.connection.cursor()
+        cur.execute("SELECT * FROM config")
+        result = cur.fetchone()
+        real_code = result['code']
+        if str(code.data) != real_code:
             raise ValidationError('Incorrect code')
 
 
@@ -123,5 +127,5 @@ def dashboard():
 
 app.secret_key = 'super secret key'
 if __name__ == '__main__':
-    #app.run(debug=True)
-    app.run()
+    app.run(debug=True)
+    #app.run()
