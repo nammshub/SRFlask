@@ -168,6 +168,41 @@ def add_article():
         return redirect(url_for('dashboard'))
     return rt('add_article.html', form=form)
 
+
+@app.route('/edit_article/<string:id>', methods=['GET','POST'])
+@login_required
+def edit_article(id):
+    cur = mysql.connection.cursor()
+    result = cur.execute('SELECT * FROM articles WHERE id=%s',[id])
+    article=cur.fetchone()
+    form = ArticleForm(request.form)
+
+    # Populate the form with the pre existing data
+    form.title.data=article['title']
+    form.body.data=article['body']
+    if request.method == 'POST' and form.validate():
+        title = request.form['title']
+        body = request.form['body']
+
+
+        cur.execute('UPDATE articles SET title=%s, body=%s WHERE id=%s',(title, body, article['id']))
+        mysql.connection.commit()
+        cur.close()
+
+        flash('Article updated', 'success')
+        return redirect(url_for('dashboard'))
+    return rt('edit_article.html', form=form)
+
+@app.route('/delete_article/<string:id>')
+@login_required
+def delete_article(id):
+    cur = mysql.connection.cursor()
+    cur.execute('DELETE FROM articles WHERE id=%s',[id])
+    mysql.connection.commit()
+    cur.close()
+    flash('Article deleted','success')
+    return redirect(url_for('dashboard'))
+
 app.secret_key = 'super secret key'
 if __name__ == '__main__':
     app.run(debug=True)
