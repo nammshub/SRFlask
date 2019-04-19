@@ -113,6 +113,7 @@ def login():
 
 
 @app.route('/logout')
+@login_required
 def logout():
     session.clear()
     flash('You are now logged out', 'success')
@@ -124,6 +125,28 @@ def logout():
 def dashboard():
     return rt('dashboard.html')
 
+
+class ArticleForm(Form):
+    title = StringField('Title', [validators.Length(min=1, max=200), validators.DataRequired()])
+    body = TextAreaField('Body', [validators.Length(min=30), validators.DataRequired()])
+
+
+@app.route('/add_article', methods=['GET','POST'])
+@login_required
+def add_article():
+    form = ArticleForm(request.form)
+    if request.method == 'POST' and form.validate():
+        title = form.title.data
+        body = form.body.data
+
+        cur = mysql.connection.cursor()
+        cur.execute('INSERT INTO articles(title,body, author) VALUES(%s,%s,%s)',(title, body, session['username']))
+        mysql.connection.commit()
+        cur.close()
+
+        flash('Article created', 'success')
+        return redirect(url_for('dashboard'))
+    return rt('add_article.html', form=form)
 
 app.secret_key = 'super secret key'
 if __name__ == '__main__':
