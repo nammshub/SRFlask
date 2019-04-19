@@ -6,10 +6,10 @@ from wtforms import Form, StringField, TextAreaField, PasswordField, ValidationE
 from passlib.hash import sha256_crypt
 from functools import wraps
 
-from data import Articles
+#from data import Articles
 
 
-Articles = Articles()
+#Articles = Articles()
 
 app = Flask(__name__)
 # Mysql config
@@ -45,12 +45,24 @@ def about():
 
 @app.route('/articles/')
 def articles():
-    return rt('articles.html', articles=Articles)
+    cur = mysql.connection.cursor()
+    results = cur.execute('SELECT * FROM articles')
+    articles = cur.fetchall()
+    cur.close()
+    if results>0:
+        return rt('articles.html', articles=articles)
+    else:
+        msg = 'No articles found'
+        return rt('articles.html')
 
 
 @app.route('/article/<string:id>/')
 def article(id):
-    return rt('article.html', id=id)
+    cur = mysql.connection.cursor()
+    results = cur.execute('SELECT * FROM articles WHERE id = %s', [id])
+    article = cur.fetchone()
+    cur.close()
+    return rt('article.html', article=article)
 
 
 class RegisterForm(Form):
@@ -123,7 +135,15 @@ def logout():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    return rt('dashboard.html')
+    cur = mysql.connection.cursor()
+    results = cur.execute('SELECT * FROM articles')
+    articles = cur.fetchall()
+    cur.close()
+    if results>0:
+        return rt('dashboard.html', articles=articles)
+    else:
+        msg = 'No articles found'
+        return rt('dashboard.html')
 
 
 class ArticleForm(Form):
